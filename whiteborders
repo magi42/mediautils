@@ -1,0 +1,45 @@
+#!/usr/bin/python
+
+import sys,os,re
+
+borderwidth = 100
+
+for filename in sys.argv[1:]:
+    fin = os.popen("identify %s" % (filename), "r")
+    content = fin.read()
+    fin.close()
+    m = re.search(r'([0-9]+)x([0-9]+)', content)
+    if m:
+        xres = int(m.group(1))
+        yres = int(m.group(2))
+        ratio = yres/(xres*1.0)
+        portrait = 0
+        if ratio > 1:
+            portrait = 1
+            minres = xres
+            maxres = yres
+            ratio2 = 1/ratio
+        else:
+            minres = yres
+            maxres = xres
+            ratio2 = ratio
+
+        borderwidth = minres/23.36
+
+        newminfull = minres + borderwidth*2
+        newmaxfull = newminfull/ratio2
+
+        newmin = minres
+        newmax = newmaxfull - borderwidth*2
+
+        if ratio > 1:
+            newx = newmin
+            newy = newmax
+        else:
+            newx = newmax
+            newy = newmin
+
+        print "%s %dx%d (1:%f) -> %dx%d + %d (1:%f)" % (filename, xres, yres, ratio2, newx, newy, borderwidth, (newy+borderwidth*2)/(newx+borderwidth*2))
+        
+        os.system (("mogrify -geometry %dx%d -border %d " \
+                   "-bordercolor white -quality 95 %s") % (newx, newy, borderwidth, filename))

@@ -1,0 +1,71 @@
+#!/usr/bin/python
+
+import sys, os, re
+
+#videodir = "~/kuvia/canon/[0-9][0-9][0-9][0-9]"
+videodir = "~/kuvia/canon"
+
+################################################################################
+def command(cmd):
+    exitval = os.system(cmd)
+    if exitval:
+        print "Error:", exitval
+        sys.exit(1)
+
+################################################################################
+
+cmd = "find %s \\( -iname '*.mov' -or -iname '*.mts' -or -name '*.mp4' \\) -printf '%%T+ %%h/%%f\\n' | sort" % (videodir)
+pin = os.popen(cmd, "r")
+files = pin.readlines()
+pin.close()
+
+print "Found %d files" % (len(files))
+
+for file in files:
+    stripped = file.strip()
+    filename = stripped[stripped.find(" ")+1:]
+
+    # Use ctime of the video to determine when it was taken
+    ctime = stripped[:stripped.find(" ")]
+    (date, time) = ctime.split("+")
+    (year, month, day) = date.split("-")
+    timesec = time.split(".")[0].replace(":", ".")
+
+    # Interpret file name
+    odd = 0
+    cameraprefix = None
+    if filename.find(" ") != -1:
+        odd = 1
+    else:
+        basename = filename[filename.rfind("/") + 1:]
+
+        # Most video files are prefixed with "*_" indicating camera model
+        if basename.find("_") != -1:
+            cameraprefix = basename.split("_")[0]
+            if basename.startswith("GOPR"):
+                cameraprefix = "GOPRO"
+        else:
+            # Just match. The date and time acquired from the timestamp
+            # is same as what we would get here.
+            m = re.match(r"^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})", basename)
+            if m:
+                cameraprefix = "A7"
+            else:
+                odd = 1
+
+    if odd:
+        print "Skipping odd filename: %s" % (filename)
+    else:
+        suffix = basename[basename.rfind(".") + 1:].lower()
+
+        trgdir = "camera/%s/%s-%s/%s" % (year, year, month, date)
+        trgfilename = "%s-%s+%s.%s" % (cameraprefix, date, timesec, suffix)
+        trgpath = trgdir + "/" + trgfilename
+        if os.path.exists(trgpath):
+            print "%s already exists" % (trgpath)
+            command("ls -l %s" % filename)
+            command("ls -l %s" % trgpath)
+        else:
+            cmd = "mkdir -p %s ; mv -b %s %s" % (trgdir, filename, trgpath)
+            print cmd
+            command(cmd)

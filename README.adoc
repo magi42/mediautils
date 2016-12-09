@@ -1,0 +1,50 @@
+= Media Utilities
+Marko Grönroos <magi@iki.fi>
+
+These are various utilities for reorganizing and converting photographs and video files.
+
+_They were not written for public distribution and are rather hardcoded for personal use._
+
+`file-videos-by-date`::
+Finds videos from under the current directory recursively and files them by date.
+Converts the file names to include timestamp.
+
+`file-camera-videos`::
+Finds videos from camera folder recursively and files them under the `camera` folder by date.
+Converts the file names to include timestamp.
+
+`file-recordings`::
+Files audio files saved by Boldbeast recorder by date.
+Converts to MP3 if necessary.
+Cleans up caller names.
+Renames to systematic names.
+
+`images-to-pdf`::
+Converts the given images to a PDF.
+The base name of the first file is used for the PDF file.
+The purpose of this program is to bind it as a file association in KDE to easily build PDFs in Doplhin.
+
+`canon-half`::
+Reduces the size of image files for web display.
+
+`bin-files`::
+Bins the given files to subdirectories containing 100 files each.
+
+`whiteborders`::
+Adds white borders to pictures for printing them, typically in 10x15 cm format.
+Changes the image geometry slightly, because the borders must have equal width and height, but the output file must have the same geometry (2:3) as the input.
+
+== License
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+	
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied
+warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+	
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.

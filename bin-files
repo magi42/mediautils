@@ -1,0 +1,24 @@
+#!/usr/bin/python
+
+import sys,os
+
+binsize = 100
+
+files = sys.argv[1:]
+
+bins = len(files)/binsize+1
+
+print "Binning %d files to %d bins" % (len(files), bins)
+
+def cmd(cmd):
+    #print cmd
+    if os.system(cmd):
+        print "Command '%s' failed" % (cmd)
+        sys.exit(1)
+
+for i in xrange(len(files)):
+    if (i % binsize) == 0:
+        binname = "k%02d" % (i/binsize+1)
+        print "Binning in bin %s..." % (binname)
+        cmd("mkdir %s" % (binname))
+    cmd("mv %s %s/" % (files[i],binname))

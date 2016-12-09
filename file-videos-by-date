@@ -1,0 +1,51 @@
+#!/usr/bin/python
+
+import sys, os, os.path
+
+################################################################################
+def command(cmd):
+    exitval = os.system(cmd)
+    if exitval:
+        print "Error:", exitval
+        sys.exit(1)
+        
+################################################################################
+
+videodir = "." # sys.argv[1]
+
+cmd = "find %s \\( -name '*.[mM][tT][sS]' -or -name '*.[mM][pP]4' \\) -printf '%%T+ %%h/%%f\\n' | sort" % (videodir)
+fin = os.popen(cmd, "r")
+files = fin.readlines()
+fin.close()
+
+print "Found %d files" % (len(files))
+
+for file in files:
+    (ctime, filename) = file.strip().split(" ")
+    (date, time) = ctime.split("+")
+    (year, month, day) = date.split("-")
+    timesec = time.split(".")[0]
+    timesec = timesec.replace(":", ".")
+    
+    cameraprefix = "SR12"
+    basename = filename[filename.rfind("/") + 1:]
+    if basename.startswith("GOPR"):
+        cameraprefix = "GOPRO"
+    elif basename.startswith("YUN"):
+        cameraprefix = "Y4K"
+
+    filesuffix = filename[filename.rfind("."):].lower()
+
+    # The file could be a downgraded version
+    if filename.find("-1080p") != -1:
+        filesuffix = "-1080p" + filesuffix
+
+    trgdir = "../%s/%s-%s/%s" % (year, year, month, date)
+    trgfilename = "%s-%s+%s%s" % (cameraprefix, date, timesec, filesuffix)
+    trgpath = trgdir + "/" + trgfilename
+    if os.path.exists(trgpath):
+        print "%s already exists" % (trgpath)
+    else:
+        cmd = "mkdir -p %s ; mv -b %s %s" % (trgdir, filename, trgpath)
+        print cmd
+        command(cmd)

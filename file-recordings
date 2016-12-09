@@ -1,0 +1,81 @@
+#!/usr/bin/python
+# -*- coding: iso-latin-1 -*-
+
+################################################################################
+# Makes a mass conversion of call files
+################################################################################
+
+import sys,re,os
+
+files = sys.argv[1:]
+
+def convertCaller(caller):
+    caller = caller.replace("ö".decode("iso-8859-1").encode("utf-8"), "o")
+    caller = caller.replace("ä".decode("iso-8859-1").encode("utf-8"), "a")
+    caller = caller.replace("Ö".decode("iso-8859-1").encode("utf-8"), "o")
+    caller = caller.replace("Ä".decode("iso-8859-1").encode("utf-8"), "a")
+    caller = caller.replace(" ", "_")
+    return caller
+
+for file in files:
+    slashpos = file.rfind('/')
+    if slashpos != -1:
+        filename = file[slashpos+1:]
+    else:
+        filename = file
+
+    caller = None
+    newname = None
+
+    # Try different name conversions
+
+    # Typical for Boldbeast recorder in XCoverS2
+    m = re.match(r'^([^_]+)_#?\d+_([\d-]+) ([\d\.]+)_([IO])\.(3GP|AMR|MP4)$', filename)
+    if m:
+        (caller, date, time, io, filetype) = m.groups()
+
+    # Typical for Boldbeast recorder in XperiaZ3
+    m = re.match(r'^([\d-]+) ([\d\.]+)_([^_]+)_-\d+_([IO])\.(3GP|AMR|MP4)$', filename)
+    if m:
+        (date, time, caller, io, filetype) = m.groups()
+
+    # Unknown calller in Boldbeast recorder in XperiaZ3
+    m = re.match(r'^([\d-]+) ([\d\.]+)_-(\d+)_([IO])\.(3GP|AMR|MP4)$', filename)
+    if m:
+        (date, time, caller, io, filetype) = m.groups()
+
+    if caller:
+        caller = convertCaller(caller)
+        newname = "puhelu-%s_%s_%s_%s.mp3" %(date, time, caller, io)
+
+        # Create the directory if necessary
+        m = re.match(r'(\d{4})-(\d{2})-(\d{2})', date)
+        (year, month, day) = m.groups()
+        newdir = "%s/%s-%s" % (year, year, month)
+        if not os.path.exists(newdir):
+            if os.system("mkdir %s" % (newdir)):
+                print "Failed to create %s" % (newdir)
+                sys.exit(1)
+        newname = "%s/%s" % (newdir, newname)
+
+        if not os.path.exists(newname):
+            filequoted = re.sub(r'([ ])', r'\\\1', file)
+
+            if filetype == "AMR":
+                cmd = "ffmpeg -i %s -ar 22050 %s" % (filequoted, newname)
+            elif filetype == "MP4":
+                cmd = "ffmpeg -i %s -ar 22050 %s" % (filequoted, newname)
+            elif filetype == "3GP":
+                cmd = "ffmpeg -i %s -c:a libmp3lame -ar 22050 %s" % (filequoted, newname)
+            else:
+                print "Do not know how to convert %s" % (filequoted)
+                cmd = None
+
+            if cmd:
+                print "Converting %s -> %s..." % (file, newname)
+                if os.system(cmd):
+                    print "Failed:"
+                    print cmd
+                    sys.exit(1)
+    else:
+        print "Could not convert %s" % (file)
